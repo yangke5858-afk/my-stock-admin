@@ -1292,11 +1292,19 @@
       try {
         const result = await apiCall('/trpc/auth.login', 'POST', { json: { username, password } });
         
+        console.log('Login result:', JSON.stringify(result));
+        
+        // Handle different response formats
+        let data = null;
         if (result?.result?.data?.json) {
-          const data = result.result.data.json;
-          
+          data = result.result.data.json;
+        } else if (result?.result?.data) {
+          data = result.result.data;
+        }
+        
+        if (data && data.success && data.user) {
           // Check if user is admin
-          if (data.user?.role !== 'admin') {
+          if (data.user.role !== 'admin') {
             throw new Error('您没有管理员权限');
           }
           
@@ -1312,6 +1320,7 @@
         } else if (result?.error) {
           throw new Error(result.error.message || '登录失败');
         } else {
+          console.error('Unexpected response format:', result);
           throw new Error('登录失败，请检查账号密码');
         }
       } catch (error) {
