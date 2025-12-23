@@ -1,0 +1,2424 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MY Stock 后台管理系统</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --primary: #10B981;
+      --primary-dark: #059669;
+      --success: #10B981;
+      --warning: #F59E0B;
+      --danger: #EF4444;
+      --info: #3B82F6;
+      --bg-dark: #111827;
+      --bg-card: #1F2937;
+      --bg-hover: #374151;
+      --border: #374151;
+      --text: #F9FAFB;
+      --text-secondary: #9CA3AF;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    
+    /* Login Page */
+    .login-container {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #111827 0%, #1F2937 100%);
+    }
+    
+    .login-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px;
+      width: 400px;
+      max-width: 90%;
+    }
+    
+    .login-logo {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    
+    .login-logo h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+    
+    .login-logo span {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+    
+    .login-form .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .login-form label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+    }
+    
+    .login-form input {
+      width: 100%;
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: var(--text);
+      font-size: 15px;
+      transition: border-color 0.2s;
+    }
+    
+    .login-form input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    
+    .login-btn {
+      width: 100%;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .login-btn:hover {
+      background: var(--primary-dark);
+    }
+    
+    .login-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .login-error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid var(--danger);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 20px;
+      color: var(--danger);
+      font-size: 14px;
+      display: none;
+    }
+    
+    /* Sidebar */
+    .sidebar {
+      width: 260px;
+      background: var(--bg-card);
+      border-right: 1px solid var(--border);
+      height: 100vh;
+      position: fixed;
+      left: 0;
+      top: 0;
+      overflow-y: auto;
+      z-index: 100;
+    }
+    
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    }
+    
+    .sidebar-header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: white;
+    }
+    
+    .sidebar-header span {
+      font-size: 12px;
+      color: rgba(255,255,255,0.8);
+    }
+    
+    .nav-section {
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .nav-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      padding: 0 20px 8px;
+      letter-spacing: 0.5px;
+    }
+    
+    .nav-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 20px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+      border-left: 3px solid transparent;
+    }
+    
+    .nav-item:hover {
+      background: var(--bg-hover);
+      color: var(--text);
+    }
+    
+    .nav-item.active {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--primary);
+      border-left-color: var(--primary);
+    }
+    
+    .nav-item i {
+      width: 20px;
+      margin-right: 12px;
+      font-size: 14px;
+    }
+    
+    .nav-badge {
+      margin-left: auto;
+      background: var(--danger);
+      color: white;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      min-width: 20px;
+      text-align: center;
+    }
+    
+    /* Main Content */
+    .main-content {
+      margin-left: 260px;
+      min-height: 100vh;
+    }
+    
+    .top-bar {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    
+    .top-bar h2 {
+      font-size: 20px;
+      font-weight: 600;
+    }
+    
+    .admin-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .admin-name {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+    
+    .admin-avatar {
+      width: 36px;
+      height: 36px;
+      background: var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+    }
+    
+    .logout-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .logout-btn:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+    
+    .page-content {
+      padding: 24px;
+    }
+    
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+    }
+    
+    .stat-card.primary::before { background: var(--primary); }
+    .stat-card.warning::before { background: var(--warning); }
+    .stat-card.success::before { background: var(--success); }
+    .stat-card.danger::before { background: var(--danger); }
+    .stat-card.info::before { background: var(--info); }
+    
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-bottom: 12px;
+    }
+    
+    .stat-card.primary .stat-icon { background: rgba(16, 185, 129, 0.15); color: var(--primary); }
+    .stat-card.warning .stat-icon { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+    .stat-card.success .stat-icon { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+    .stat-card.danger .stat-icon { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+    .stat-card.info .stat-icon { background: rgba(59, 130, 246, 0.15); color: var(--info); }
+    
+    .stat-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+    
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+    }
+    
+    .stat-card.primary .stat-value { color: var(--primary); }
+    .stat-card.warning .stat-value { color: var(--warning); }
+    .stat-card.success .stat-value { color: var(--success); }
+    .stat-card.danger .stat-value { color: var(--danger); }
+    .stat-card.info .stat-value { color: var(--info); }
+    
+    /* Card */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(0,0,0,0.2);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    
+    .card-header h3 {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    
+    .card-body {
+      padding: 20px;
+    }
+    
+    /* Filter Bar */
+    .filter-bar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    
+    .filter-bar select,
+    .filter-bar input {
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: var(--text);
+      font-size: 14px;
+    }
+    
+    .filter-bar input {
+      width: 200px;
+    }
+    
+    .filter-bar select:focus,
+    .filter-bar input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+    
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-success { background: var(--success); color: white; }
+    .btn-success:hover { opacity: 0.9; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger:hover { opacity: 0.9; }
+    .btn-warning { background: var(--warning); color: white; }
+    .btn-warning:hover { opacity: 0.9; }
+    .btn-info { background: var(--info); color: white; }
+    .btn-info:hover { opacity: 0.9; }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-outline:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    .btn-sm { padding: 4px 10px; font-size: 12px; }
+    .btn-xs { padding: 2px 8px; font-size: 11px; }
+    
+    /* Table */
+    .table-container {
+      overflow-x: auto;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 800px;
+    }
+    
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    
+    th {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      background: rgba(0, 0, 0, 0.3);
+      position: sticky;
+      top: 0;
+    }
+    
+    td { font-size: 14px; }
+    
+    tr:hover td { background: rgba(16, 185, 129, 0.05); }
+    
+    /* Status Badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    .badge-pending { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+    .badge-success, .badge-approved, .badge-allocated, .badge-active { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+    .badge-danger, .badge-rejected, .badge-cancelled, .badge-disabled { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+    .badge-info { background: rgba(59, 130, 246, 0.15); color: var(--info); }
+    .badge-secondary { background: rgba(156, 163, 175, 0.15); color: var(--text-secondary); }
+    
+    .badge-day_trading { background: rgba(59, 130, 246, 0.15); color: var(--info); }
+    .badge-block_trade { background: rgba(139, 92, 246, 0.15); color: #A78BFA; }
+    
+    /* Toggle Switch */
+    .toggle {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      cursor: pointer;
+      display: inline-block;
+    }
+    
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .toggle-slider {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--border);
+      border-radius: 24px;
+      transition: 0.3s;
+    }
+    
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      left: 3px;
+      bottom: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+    
+    .toggle input:checked + .toggle-slider {
+      background: var(--primary);
+    }
+    
+    .toggle input:checked + .toggle-slider::before {
+      transform: translateX(20px);
+    }
+    
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+    }
+    
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: 560px;
+      max-width: 95%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    
+    .modal-lg { width: 800px; }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .modal-header h3 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 24px;
+      line-height: 1;
+    }
+    
+    .modal-close:hover { color: var(--text); }
+    
+    .modal-body { padding: 20px; }
+    
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 20px;
+      border-top: 1px solid var(--border);
+    }
+    
+    /* Form */
+    .form-group {
+      margin-bottom: 16px;
+    }
+    
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: var(--text);
+      font-size: 14px;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    
+    .form-group textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+    
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    
+    /* Info Display */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+      padding: 16px;
+      background: var(--bg-dark);
+      border-radius: 8px;
+    }
+    
+    .info-item {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .info-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+    
+    .info-value {
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    /* Pagination */
+    .pagination {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+    }
+    
+    .pagination-info {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    
+    .pagination-buttons {
+      display: flex;
+      gap: 8px;
+    }
+    
+    /* Loading & Empty */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 60px;
+      color: var(--text-secondary);
+    }
+    
+    .loading i {
+      animation: spin 1s linear infinite;
+      margin-right: 8px;
+    }
+    
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-secondary);
+    }
+    
+    .empty-state i {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+    
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 2000;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+    
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    
+    .toast.success { border-color: var(--success); }
+    .toast.error { border-color: var(--danger); }
+    
+    .toast i { font-size: 20px; }
+    .toast.success i { color: var(--success); }
+    .toast.error i { color: var(--danger); }
+    
+    /* Action Buttons */
+    .action-buttons {
+      display: flex;
+      gap: 6px;
+    }
+    
+    /* Page Hidden */
+    .page { display: none; }
+    .page.active { display: block; }
+    
+    .app-container { display: none; }
+    .app-container.active { display: block; }
+    
+    /* Responsive */
+    @media (max-width: 1400px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    
+    @media (max-width: 768px) {
+      .sidebar { width: 60px; }
+      .sidebar-header h1, .sidebar-header span, .nav-item span, .nav-section-title { display: none; }
+      .nav-item { justify-content: center; padding: 16px; }
+      .nav-item i { margin-right: 0; font-size: 18px; }
+      .main-content { margin-left: 60px; }
+      .stats-grid { grid-template-columns: 1fr; }
+      .form-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Login Page -->
+  <div id="login-page" class="login-container">
+    <div class="login-box">
+      <div class="login-logo">
+        <h1>MY Stock</h1>
+        <span>后台管理系统</span>
+      </div>
+      <div class="login-error" id="login-error"></div>
+      <form class="login-form" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label>管理员账号</label>
+          <input type="text" id="login-username" placeholder="请输入账号" required>
+        </div>
+        <div class="form-group">
+          <label>密码</label>
+          <input type="password" id="login-password" placeholder="请输入密码" required>
+        </div>
+        <button type="submit" class="login-btn" id="login-btn">
+          <span>登录</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- App Container -->
+  <div id="app-container" class="app-container">
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="sidebar-header">
+        <h1>MY Stock</h1>
+        <span>后台管理系统 v2.0</span>
+      </div>
+      
+      <div class="nav-section">
+        <div class="nav-section-title">概览</div>
+        <div class="nav-item active" data-page="dashboard">
+          <i class="fas fa-chart-pie"></i>
+          <span>控制台</span>
+        </div>
+      </div>
+      
+      <div class="nav-section">
+        <div class="nav-section-title">会员管理</div>
+        <div class="nav-item" data-page="users">
+          <i class="fas fa-users"></i>
+          <span>用户资料</span>
+        </div>
+      </div>
+      
+      <div class="nav-section">
+        <div class="nav-section-title">交易管理</div>
+        <div class="nav-item" data-page="applications">
+          <i class="fas fa-file-alt"></i>
+          <span>申请审核</span>
+          <span class="nav-badge" id="badge-applications">0</span>
+        </div>
+        <div class="nav-item" data-page="positions">
+          <i class="fas fa-briefcase"></i>
+          <span>持仓列表</span>
+        </div>
+      </div>
+      
+      <div class="nav-section">
+        <div class="nav-section-title">财务管理</div>
+        <div class="nav-item" data-page="deposits">
+          <i class="fas fa-arrow-circle-down"></i>
+          <span>充值管理</span>
+          <span class="nav-badge" id="badge-deposits">0</span>
+        </div>
+        <div class="nav-item" data-page="withdrawals">
+          <i class="fas fa-arrow-circle-up"></i>
+          <span>提现管理</span>
+          <span class="nav-badge" id="badge-withdrawals">0</span>
+        </div>
+        <div class="nav-item" data-page="transactions">
+          <i class="fas fa-exchange-alt"></i>
+          <span>资金流水</span>
+        </div>
+      </div>
+      
+      <div class="nav-section">
+        <div class="nav-section-title">系统设置</div>
+        <div class="nav-item" data-page="notifications">
+          <i class="fas fa-bell"></i>
+          <span>发送通知</span>
+        </div>
+        <div class="nav-item" data-page="logs">
+          <i class="fas fa-history"></i>
+          <span>操作日志</span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="top-bar">
+        <h2 id="page-title">控制台</h2>
+        <div class="admin-info">
+          <span class="admin-name" id="admin-name">管理员</span>
+          <div class="admin-avatar" id="admin-avatar">A</div>
+          <button class="logout-btn" onclick="handleLogout()">
+            <i class="fas fa-sign-out-alt"></i> 退出
+          </button>
+        </div>
+      </div>
+      
+      <div class="page-content">
+        <!-- Dashboard Page -->
+        <div id="page-dashboard" class="page active">
+          <div class="stats-grid">
+            <div class="stat-card primary">
+              <div class="stat-icon"><i class="fas fa-users"></i></div>
+              <div class="stat-label">总用户数</div>
+              <div class="stat-value" id="stat-users">-</div>
+            </div>
+            <div class="stat-card warning">
+              <div class="stat-icon"><i class="fas fa-file-alt"></i></div>
+              <div class="stat-label">待审核申请</div>
+              <div class="stat-value" id="stat-applications">-</div>
+            </div>
+            <div class="stat-card success">
+              <div class="stat-icon"><i class="fas fa-arrow-circle-down"></i></div>
+              <div class="stat-label">待审核充值</div>
+              <div class="stat-value" id="stat-deposits">-</div>
+            </div>
+            <div class="stat-card danger">
+              <div class="stat-icon"><i class="fas fa-arrow-circle-up"></i></div>
+              <div class="stat-label">待审核提现</div>
+              <div class="stat-value" id="stat-withdrawals">-</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Users Page -->
+        <div id="page-users" class="page">
+          <div class="card">
+            <div class="card-header">
+              <h3>用户列表</h3>
+              <div class="filter-bar">
+                <select id="user-status-filter" onchange="loadUsers()">
+                  <option value="all">全部状态</option>
+                  <option value="active">正常</option>
+                  <option value="disabled">禁用</option>
+                </select>
+                <input type="text" id="user-search" placeholder="搜索用户..." onkeyup="debounceSearch(loadUsers)">
+                <button class="btn btn-primary btn-sm" onclick="loadUsers()">
+                  <i class="fas fa-search"></i> 搜索
+                </button>
+                <button class="btn btn-success btn-sm" onclick="exportUsers()">
+                  <i class="fas fa-file-excel"></i> 导出Excel
+                </button>
+              </div>
+            </div>
+            <div class="table-container" id="users-table">
+              <div class="loading"><i class="fas fa-spinner"></i> 加载中...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Applications Page -->
+        <div id="page-applications" class="page">
+          <div class="card">
+            <div class="card-header">
+              <h3>交易申请审核</h3>
+              <div class="filter-bar">
+                <select id="app-type-filter" onchange="loadApplications()">
+                  <option value="all">全部类型</option>
+                  <option value="day_trading">日内交易</option>
+                  <option value="block_trade">大宗交易</option>
+                </select>
+                <select id="app-status-filter" onchange="loadApplications()">
+                  <option value="pending">待审核</option>
+                  <option value="allocated">已分配</option>
+                  <option value="rejected">已拒绝</option>
+                  <option value="all">全部</option>
+                </select>
+                <input type="text" id="app-search" placeholder="搜索..." onkeyup="debounceSearch(loadApplications)">
+                <button class="btn btn-success btn-sm" onclick="exportApplications()">
+                  <i class="fas fa-file-excel"></i> 导出Excel
+                </button>
+              </div>
+            </div>
+            <div class="table-container" id="applications-table">
+              <div class="loading"><i class="fas fa-spinner"></i> 加载中...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Positions Page -->
+        <div id="page-positions" class="page">
+          <div class="card">
+            <div class="card-header">
+              <h3>用户持仓</h3>
+              <div class="filter-bar">
+                <input type="text" id="position-search" placeholder="搜索用户/股票..." onkeyup="debounceSearch(loadPositions)">
+                <button class="btn btn-success btn-sm" onclick="exportPositions()">
+                  <i class="fas fa-file-excel"></i> 导出Excel
+                </button>
+              </div>
+            </div>
+            <div class="table-container" id="positions-table">
+              <div class="loading"><i class="fas fa-spinner"></i> 加载中...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Deposits Page -->
+        <div id="page-deposits" class="page">
+          <div class="card">
+            <div class="card-header">
+              <h3>充值管理</h3>
+              <div class="filter-bar">
+                <select id="deposit-status-filter" onchange="loadDeposits()">
+                  <option value="pending">待审核</option>
+                  <option value="approved">已通过</option>
+                  <option value="rejected">已拒绝</option>
+                  <option value="all">全部</option>
+                </select>
+                <input type="text" id="deposit-search" placeholder="搜索..." onkeyup="debounceSearch(loadDeposits)">
+                <button class="btn btn-success btn-sm" onclick="exportDeposits()">
+                  <i class="fas fa-file-excel"></i> 导出Excel
+                </button>
+              </div>
+            </div>
+            <div class="table-container" id="deposits-table">
+              <div class="loading"><i class="fas fa-spinner"></i> 加载中...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Withdrawals Page -->
+        <div id="page-withdrawals" class="page">
+          <div class="card">
+            <div class="card-header">
+              <h3>提现管理</h3>
+              <div class="filter-bar">
+                <select id="withdrawal-status-filter" onchange="loadWithdrawals()">
+                  <option value="pending">待审核</option>
+                  <option value="approved">已通过</option>
+                  <option value="rejected">已拒绝</option>
+                  <option value="all">全部</option>
+                </select>
+                <input type="text" id="withdrawal-search" placeholder="搜索..." onkeyup="debounceSearch(loadWithdrawals)">
+                <button class="btn btn-success btn-sm" onclick="exportWithdrawals()">
+                  <i class="fas fa-file-excel"></i> 导出Excel
+                </button>
+              </div>
+            </div>
+            <div class="table-container" id="withdrawals-table">
+              <div class="loading"><i class="fas fa-spinner"></i> 加载中...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transactions Page -->
+        <div id="page-transactions" class="page">
+          <div class="card">
+            <div class="card-header">
+              <h3>资金流水</h3>
+              <div class="filter-bar">
+                <select id="tx-type-filter" onchange="loadTransactions()">
+                  <option value="all">全部类型</option>
+                  <option value="deposit">充值</option>
+                  <option value="withdraw">提现</option>
+                  <option value="buy">买入</option>
+                  <option value="sell">卖出</option>
+                  <option value="adjust">调账</option>
+                </select>
+                <input type="text" id="tx-search" placeholder="搜索用户..." onkeyup="debounceSearch(loadTransactions)">
+                <button class="btn btn-success btn-sm" onclick="exportTransactions()">
+                  <i class="fas fa-file-excel"></i> 导出Excel
+                </button>
+              </div>
+            </div>
+            <div class="table-container" id="transactions-table">
+              <div class="loading"><i class="fas fa-spinner"></i> 加载中...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notifications Page -->
+        <div id="page-notifications" class="page">
+          <div class="card">
+            <div class="card-header">
+              <h3>发送系统通知</h3>
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <label>通知标题</label>
+                <input type="text" id="notify-title" placeholder="请输入通知标题">
+              </div>
+              <div class="form-group">
+                <label>通知内容</label>
+                <textarea id="notify-content" placeholder="请输入通知内容"></textarea>
+              </div>
+              <div class="form-group">
+                <label>发送对象</label>
+                <select id="notify-target" onchange="toggleUserIds()">
+                  <option value="all">所有用户</option>
+                  <option value="specific">指定用户</option>
+                </select>
+              </div>
+              <div class="form-group" id="notify-user-ids-group" style="display: none;">
+                <label>用户ID（多个用逗号分隔）</label>
+                <input type="text" id="notify-user-ids" placeholder="例如: 1,2,3">
+              </div>
+              <button class="btn btn-primary" onclick="sendNotification()">
+                <i class="fas fa-paper-plane"></i> 发送通知
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Logs Page -->
+        <div id="page-logs" class="page">
+          <div class="card">
+            <div class="card-header">
+              <h3>操作日志</h3>
+              <div class="filter-bar">
+                <select id="log-module-filter" onchange="loadLogs()">
+                  <option value="all">全部模块</option>
+                  <option value="用户管理">用户管理</option>
+                  <option value="充值管理">充值管理</option>
+                  <option value="提现管理">提现管理</option>
+                  <option value="申请审核">申请审核</option>
+                  <option value="通知管理">通知管理</option>
+                </select>
+                <input type="text" id="log-search" placeholder="搜索..." onkeyup="debounceSearch(loadLogs)">
+                <button class="btn btn-success btn-sm" onclick="exportLogs()">
+                  <i class="fas fa-file-excel"></i> 导出Excel
+                </button>
+              </div>
+            </div>
+            <div class="table-container" id="logs-table">
+              <div class="loading"><i class="fas fa-spinner"></i> 加载中...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Allocate Modal -->
+  <div class="modal-overlay" id="allocate-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>分配额度</h3>
+        <button class="modal-close" onclick="closeModal('allocate-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="info-grid" id="allocate-info"></div>
+        <div class="form-group">
+          <label>分配数量</label>
+          <input type="number" id="allocate-quantity" min="0" placeholder="请输入分配数量">
+        </div>
+        <div class="form-group">
+          <label>备注（可选）</label>
+          <textarea id="allocate-remark" placeholder="请输入备注"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('allocate-modal')">取消</button>
+        <button class="btn btn-primary" onclick="submitAllocate()">确认分配</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reject Modal -->
+  <div class="modal-overlay" id="reject-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>拒绝申请</h3>
+        <button class="modal-close" onclick="closeModal('reject-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>拒绝原因</label>
+          <textarea id="reject-reason" placeholder="请输入拒绝原因"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('reject-modal')">取消</button>
+        <button class="btn btn-danger" onclick="submitReject()">确认拒绝</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Balance Modal -->
+  <div class="modal-overlay" id="balance-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>调整余额</h3>
+        <button class="modal-close" onclick="closeModal('balance-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="info-grid" id="balance-info"></div>
+        <div class="form-group">
+          <label>调整类型</label>
+          <select id="balance-type">
+            <option value="add">增加余额</option>
+            <option value="subtract">扣减余额</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>金额</label>
+          <input type="number" id="balance-amount" step="0.01" min="0" placeholder="请输入金额">
+        </div>
+        <div class="form-group">
+          <label>调整原因</label>
+          <textarea id="balance-reason" placeholder="请输入调整原因"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('balance-modal')">取消</button>
+        <button class="btn btn-primary" onclick="submitBalanceAdjust()">确认调整</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <i class="fas fa-check-circle"></i>
+    <span id="toast-message">操作成功</span>
+  </div>
+
+  <script>
+    // API Base URL
+    const API_BASE = 'https://3000-il9752br2hcf0rrwgiony-d82fd949.sg1.manus.computer';
+    
+    // State
+    let currentPage = 'dashboard';
+    let currentApplicationId = null;
+    let currentUserId = null;
+    let searchTimeout = null;
+    let adminToken = null;
+    let adminUser = null;
+    
+    // Data cache for export
+    let usersData = [];
+    let applicationsData = [];
+    let depositsData = [];
+    let withdrawalsData = [];
+    let transactionsData = [];
+    let positionsData = [];
+    let logsData = [];
+    
+    // Page titles
+    const pageTitles = {
+      'dashboard': '控制台',
+      'users': '用户资料',
+      'applications': '申请审核',
+      'positions': '持仓列表',
+      'deposits': '充值管理',
+      'withdrawals': '提现管理',
+      'transactions': '资金流水',
+      'notifications': '发送通知',
+      'logs': '操作日志'
+    };
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      checkAuth();
+      initNavigation();
+    });
+    
+    // Auth Functions
+    function checkAuth() {
+      const savedToken = localStorage.getItem('adminToken');
+      const savedUser = localStorage.getItem('adminUser');
+      
+      if (savedToken && savedUser) {
+        adminToken = savedToken;
+        adminUser = JSON.parse(savedUser);
+        showApp();
+      } else {
+        showLogin();
+      }
+    }
+    
+    function showLogin() {
+      document.getElementById('login-page').style.display = 'flex';
+      document.getElementById('app-container').classList.remove('active');
+    }
+    
+    function showApp() {
+      document.getElementById('login-page').style.display = 'none';
+      document.getElementById('app-container').classList.add('active');
+      
+      if (adminUser) {
+        document.getElementById('admin-name').textContent = adminUser.username || '管理员';
+        document.getElementById('admin-avatar').textContent = (adminUser.username || 'A')[0].toUpperCase();
+      }
+      
+      loadDashboard();
+    }
+    
+    async function handleLogin(e) {
+      e.preventDefault();
+      
+      const username = document.getElementById('login-username').value;
+      const password = document.getElementById('login-password').value;
+      const loginBtn = document.getElementById('login-btn');
+      const errorDiv = document.getElementById('login-error');
+      
+      loginBtn.disabled = true;
+      loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 登录中...';
+      errorDiv.style.display = 'none';
+      
+      try {
+        const result = await apiCall('/trpc/auth.login', 'POST', { username, password });
+        
+        if (result?.result?.data) {
+          const user = result.result.data;
+          
+          // Check if user is admin
+          if (user.role !== 'admin') {
+            throw new Error('您没有管理员权限');
+          }
+          
+          adminToken = 'session_' + Date.now();
+          adminUser = user;
+          
+          localStorage.setItem('adminToken', adminToken);
+          localStorage.setItem('adminUser', JSON.stringify(adminUser));
+          
+          showApp();
+        } else if (result?.error) {
+          throw new Error(result.error.message || '登录失败');
+        } else {
+          throw new Error('登录失败，请检查账号密码');
+        }
+      } catch (error) {
+        errorDiv.textContent = error.message || '登录失败';
+        errorDiv.style.display = 'block';
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = '<span>登录</span>';
+      }
+    }
+    
+    function handleLogout() {
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminUser');
+      adminToken = null;
+      adminUser = null;
+      showLogin();
+    }
+    
+    // Navigation
+    function initNavigation() {
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const page = item.dataset.page;
+          switchPage(page);
+        });
+      });
+    }
+    
+    function switchPage(page) {
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.toggle('active', item.dataset.page === page);
+      });
+      
+      document.querySelectorAll('.page').forEach(p => {
+        p.classList.remove('active');
+      });
+      document.getElementById(`page-${page}`).classList.add('active');
+      
+      document.getElementById('page-title').textContent = pageTitles[page] || page;
+      
+      currentPage = page;
+      
+      switch(page) {
+        case 'dashboard': loadDashboard(); break;
+        case 'users': loadUsers(); break;
+        case 'applications': loadApplications(); break;
+        case 'positions': loadPositions(); break;
+        case 'deposits': loadDeposits(); break;
+        case 'withdrawals': loadWithdrawals(); break;
+        case 'transactions': loadTransactions(); break;
+        case 'logs': loadLogs(); break;
+      }
+    }
+    
+    // Debounce search
+    function debounceSearch(fn) {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(fn, 300);
+    }
+    
+    // API Calls
+    async function apiCall(endpoint, method = 'GET', data = null) {
+      try {
+        const options = {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
+        };
+        
+        if (method === 'POST' && data) {
+          options.body = JSON.stringify(data);
+        }
+        
+        let url = `${API_BASE}${endpoint}`;
+        if (method === 'GET' && data) {
+          url += `?input=${encodeURIComponent(JSON.stringify(data))}`;
+        }
+        
+        const response = await fetch(url, options);
+        return await response.json();
+      } catch (error) {
+        console.error('API Error:', error);
+        return null;
+      }
+    }
+    
+    // Dashboard
+    async function loadDashboard() {
+      try {
+        const result = await apiCall('/trpc/admin.dashboard', 'GET');
+        
+        if (result?.result?.data) {
+          const data = result.result.data;
+          document.getElementById('stat-users').textContent = data.totalUsers || 0;
+          document.getElementById('stat-applications').textContent = data.pendingApplications || 0;
+          document.getElementById('stat-deposits').textContent = data.pendingDeposits || 0;
+          document.getElementById('stat-withdrawals').textContent = data.pendingWithdrawals || 0;
+          
+          document.getElementById('badge-applications').textContent = data.pendingApplications || 0;
+          document.getElementById('badge-deposits').textContent = data.pendingDeposits || 0;
+          document.getElementById('badge-withdrawals').textContent = data.pendingWithdrawals || 0;
+        }
+      } catch (error) {
+        console.error('Load dashboard error:', error);
+      }
+    }
+    
+    // Users
+    async function loadUsers() {
+      const container = document.getElementById('users-table');
+      container.innerHTML = '<div class="loading"><i class="fas fa-spinner"></i> 加载中...</div>';
+      
+      try {
+        const status = document.getElementById('user-status-filter').value;
+        const search = document.getElementById('user-search').value;
+        
+        const result = await apiCall('/trpc/admin.users.list', 'GET', { 
+          page: 1, 
+          limit: 50,
+          status: status !== 'all' ? status : undefined,
+          search: search || undefined
+        });
+        
+        if (result?.result?.data) {
+          const { users, total } = result.result.data;
+          usersData = users;
+          renderUsersTable(users, total);
+        } else {
+          container.innerHTML = '<div class="empty-state"><i class="fas fa-users"></i><p>暂无用户数据</p></div>';
+        }
+      } catch (error) {
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-circle"></i><p>加载失败</p></div>';
+      }
+    }
+    
+    function renderUsersTable(users, total) {
+      const container = document.getElementById('users-table');
+      
+      if (!users || users.length === 0) {
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-users"></i><p>暂无用户数据</p></div>';
+        return;
+      }
+      
+      let html = `
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>用户名</th>
+              <th>手机号</th>
+              <th>实名</th>
+              <th>可用余额</th>
+              <th>冻结资金</th>
+              <th>状态</th>
+              <th>注册时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      
+      users.forEach(user => {
+        const balance = parseFloat(user.balance || 0);
+        const frozen = parseFloat(user.frozenBalance || 0);
+        const statusBadge = user.status === 'active' ? 'badge-active' : 'badge-disabled';
+        const statusLabel = user.status === 'active' ? '正常' : '禁用';
+        
+        html += `
+          <tr>
+            <td>${user.id}</td>
+            <td>${user.username || '-'}</td>
+            <td>${user.phone || '-'}</td>
+            <td>${user.name || '-'}</td>
+            <td style="color: ${balance > 0 ? 'var(--success)' : 'inherit'}">${balance.toFixed(2)}</td>
+            <td style="color: ${frozen > 0 ? 'var(--warning)' : 'inherit'}">${frozen.toFixed(2)}</td>
+            <td><span class="badge ${statusBadge}">${statusLabel}</span></td>
+            <td>${formatDate(user.createdAt)}</td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn btn-warning btn-xs" onclick="openBalanceModal(${user.id}, '${user.username}', ${balance})">
+                  <i class="fas fa-dollar-sign"></i>
+                </button>
+                <button class="btn ${user.status === 'active' ? 'btn-danger' : 'btn-success'} btn-xs" onclick="toggleUserStatus(${user.id}, '${user.status}')">
+                  <i class="fas fa-${user.status === 'active' ? 'ban' : 'check'}"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+      
+      html += '</tbody></table>';
+      html += `
+        <div class="pagination">
+          <div class="pagination-info">显示 ${users.length} 条，共 ${total} 条</div>
+        </div>
+      `;
+      
+      container.innerHTML = html;
+    }
+    
+    function openBalanceModal(userId, username, balance) {
+      currentUserId = userId;
+      document.getElementById('balance-info').innerHTML = `
+        <div class="info-item"><span class="info-label">用户ID</span><span class="info-value">${userId}</span></div>
+        <div class="info-item"><span class="info-label">用户名</span><span class="info-value">${username}</span></div>
+        <div class="info-item"><span class="info-label">当前余额</span><span class="info-value">${balance.toFixed(2)} MYR</span></div>
+      `;
+      document.getElementById('balance-amount').value = '';
+      document.getElementById('balance-reason').value = '';
+      openModal('balance-modal');
+    }
+    
+    async function submitBalanceAdjust() {
+      const type = document.getElementById('balance-type').value;
+      const amount = parseFloat(document.getElementById('balance-amount').value);
+      const remark = document.getElementById('balance-reason').value;
+      
+      if (!amount || amount <= 0) {
+        showToast('请输入有效金额', 'error');
+        return;
+      }
+      
+      if (!remark) {
+        showToast('请输入调整原因', 'error');
+        return;
+      }
+      
+      try {
+        const result = await apiCall('/trpc/admin.users.updateBalance', 'POST', {
+          userId: currentUserId,
+          amount: amount,
+          type: type,
+          remark: remark
+        });
+        
+        if (result?.result?.data?.success) {
+          showToast('余额调整成功', 'success');
+          closeModal('balance-modal');
+          loadUsers();
+        } else {
+          showToast(result?.error?.message || '调整失败', 'error');
+        }
+      } catch (error) {
+        showToast('操作失败', 'error');
+      }
+    }
+    
+    async function toggleUserStatus(userId, currentStatus) {
+      const newStatus = currentStatus === 'active' ? 'disabled' : 'active';
+      const action = newStatus === 'disabled' ? '禁用' : '启用';
+      
+      if (!confirm(`确定要${action}该用户吗？`)) return;
+      
+      try {
+        const result = await apiCall('/trpc/admin.users.updateStatus', 'POST', {
+          userId: userId,
+          status: newStatus
+        });
+        
+        if (result?.result?.data?.success) {
+          showToast(`用户已${action}`, 'success');
+          loadUsers();
+        } else {
+          showToast('操作失败', 'error');
+        }
+      } catch (error) {
+        showToast('操作失败', 'error');
+      }
+    }
+    
+    // Applications
+    async function loadApplications() {
+      const container = document.getElementById('applications-table');
+      container.innerHTML = '<div class="loading"><i class="fas fa-spinner"></i> 加载中...</div>';
+      
+      try {
+        const type = document.getElementById('app-type-filter').value;
+        const status = document.getElementById('app-status-filter').value;
+        const search = document.getElementById('app-search').value;
+        
+        const result = await apiCall('/trpc/admin.applications.list', 'GET', {
+          page: 1,
+          limit: 50,
+          type: type !== 'all' ? type : undefined,
+          status: status !== 'all' ? status : undefined,
+          search: search || undefined
+        });
+        
+        if (result?.result?.data) {
+          const { applications, total } = result.result.data;
+          applicationsData = applications;
+          renderApplicationsTable(applications, total);
+        } else {
+          container.innerHTML = '<div class="empty-state"><i class="fas fa-file-alt"></i><p>暂无申请数据</p></div>';
+        }
+      } catch (error) {
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-circle"></i><p>加载失败</p></div>';
+      }
+    }
+    
+    function renderApplicationsTable(applications, total) {
+      const container = document.getElementById('applications-table');
+      
+      if (!applications || applications.length === 0) {
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-file-alt"></i><p>暂无申请数据</p></div>';
+        return;
+      }
+      
+      let html = `
+        <table>
+          <thead>
+            <tr>
+              <th>申请ID</th>
+              <th>用户</th>
+              <th>类型</th>
+              <th>股票</th>
+              <th>申请数量</th>
+              <th>价格</th>
+              <th>金额</th>
+              <th>状态</th>
+              <th>申请时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      
+      applications.forEach(app => {
+        const typeLabel = app.type === 'day_trading' ? '日内交易' : '大宗交易';
+        const typeBadge = `badge-${app.type}`;
+        const statusLabels = { pending: '待审核', allocated: '已分配', rejected: '已拒绝', cancelled: '已取消', completed: '已完成' };
+        const statusLabel = statusLabels[app.status] || app.status;
+        const statusBadge = `badge-${app.status}`;
+        const amount = parseFloat(app.amount || 0);
+        
+        html += `
+          <tr>
+            <td>${app.id}</td>
+            <td>${app.user?.username || '-'} (${app.userId})</td>
+            <td><span class="badge ${typeBadge}">${typeLabel}</span></td>
+            <td>${app.stockName} (${app.stockCode})</td>
+            <td>${app.quantity?.toLocaleString()}</td>
+            <td>${parseFloat(app.price).toFixed(3)}</td>
+            <td>${amount.toFixed(2)}</td>
+            <td><span class="badge ${statusBadge}">${statusLabel}</span></td>
+            <td>${formatDate(app.createdAt)}</td>
+            <td>
+              <div class="action-buttons">
+                ${app.status === 'pending' ? `
+                  <button class="btn btn-success btn-xs" onclick="openAllocateModal(${app.id}, ${app.quantity}, '${app.stockName}')">
+                    <i class="fas fa-check"></i>
+                  </button>
+                  <button class="btn btn-danger btn-xs" onclick="openRejectModal(${app.id})">
+                    <i class="fas fa-times"></i>
+                  </button>
+                ` : '-'}
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+      
+      html += '</tbody></table>';
+      html += `
+        <div class="pagination">
+          <div class="pagination-info">显示 ${applications.length} 条，共 ${total} 条</div>
+        </div>
+      `;
+      
+      container.innerHTML = html;
+    }
+    
+    function openAllocateModal(appId, maxQty, stockName) {
+      currentApplicationId = appId;
+      document.getElementById('allocate-info').innerHTML = `
+        <div class="info-item"><span class="info-label">申请ID</span><span class="info-value">${appId}</span></div>
+        <div class="info-item"><span class="info-label">股票</span><span class="info-value">${stockName}</span></div>
+        <div class="info-item"><span class="info-label">申请数量</span><span class="info-value">${maxQty?.toLocaleString()}</span></div>
+      `;
+      document.getElementById('allocate-quantity').value = maxQty;
+      document.getElementById('allocate-quantity').max = maxQty;
+      document.getElementById('allocate-remark').value = '';
+      openModal('allocate-modal');
+    }
+    
+    async function submitAllocate() {
+      const quantity = parseInt(document.getElementById('allocate-quantity').value);
+      const remark = document.getElementById('allocate-remark').value;
+      
+      if (!quantity || quantity <= 0) {
+        showToast('请输入有效的分配数量', 'error');
+        return;
+      }
+      
+      try {
+        const result = await apiCall('/trpc/admin.applications.allocate', 'POST', {
+          applicationId: currentApplicationId,
+          allocatedQuantity: quantity,
+          remark: remark || undefined
+        });
+        
+        if (result?.result?.data?.success) {
+          showToast('分配成功', 'success');
+          closeModal('allocate-modal');
+          loadApplications();
+          loadDashboard();
+        } else {
+          showToast(result?.error?.message || '分配失败', 'error');
+        }
+      } catch (error) {
+        showToast('操作失败', 'error');
+      }
+    }
+    
+    function openRejectModal(appId) {
+      currentApplicationId = appId;
+      document.getElementById('reject-reason').value = '';
+      openModal('reject-modal');
+    }
+    
+    async function submitReject() {
+      const reason = document.getElementById('reject-reason').value;
+      
+      try {
+        const result = await apiCall('/trpc/admin.applications.reject', 'POST', {
+          applicationId: currentApplicationId,
+          remark: reason || undefined
+        });
+        
+        if (result?.result?.data?.success) {
+          showToast('已拒绝申请', 'success');
+          closeModal('reject-modal');
+          loadApplications();
+          loadDashboard();
+        } else {
+          showToast(result?.error?.message || '操作失败', 'error');
+        }
+      } catch (error) {
+        showToast('操作失败', 'error');
+      }
+    }
+    
+    // Positions
+    async function loadPositions() {
+      const container = document.getElementById('positions-table');
+      container.innerHTML = '<div class="loading"><i class="fas fa-spinner"></i> 加载中...</div>';
+      
+      try {
+        const result = await apiCall('/trpc/admin.positions.list', 'GET', { page: 1, limit: 100 });
+        
+        if (result?.result?.data) {
+          const { positions, total } = result.result.data;
+          positionsData = positions;
+          renderPositionsTable(positions, total);
+        } else {
+          container.innerHTML = '<div class="empty-state"><i class="fas fa-briefcase"></i><p>暂无持仓数据</p></div>';
+        }
+      } catch (error) {
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-circle"></i><p>加载失败</p></div>';
+      }
+    }
+    
+    function renderPositionsTable(positions, total) {
+      const container = document.getElementById('positions-table');
+      
+      if (!positions || positions.length === 0) {
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-briefcase"></i><p>暂无持仓数据</p></div>';
+        return;
+      }
+      
+      let html = `
+        <table>
+          <thead>
+            <tr>
+              <th>用户</th>
+              <th>股票</th>
+              <th>持仓数量</th>
+              <th>成本价</th>
+              <th>市值</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      
+      positions.forEach(pos => {
+        const avgCost = parseFloat(pos.avgCost || 0);
+        const marketValue = pos.quantity * avgCost;
+        
+        html += `
+          <tr>
+            <td>${pos.user?.username || '-'} (${pos.userId})</td>
+            <td>${pos.stock?.nameCn || pos.stock?.name || '-'} (${pos.stock?.code || '-'})</td>
+            <td>${pos.quantity?.toLocaleString()}</td>
+            <td>${avgCost.toFixed(3)}</td>
+            <td>${marketValue.toFixed(2)}</td>
+          </tr>
+        `;
+      });
+      
+      html += '</tbody></table>';
+      html += `
+        <div class="pagination">
+          <div class="pagination-info">显示 ${positions.length} 条，共 ${total} 条</div>
+        </div>
+      `;
+      
+      container.innerHTML = html;
+    }
+    
+    // Deposits
+    async function loadDeposits() {
+      const container = document.getElementById('deposits-table');
+      container.innerHTML = '<div class="loading"><i class="fas fa-spinner"></i> 加载中...</div>';
+      
+      try {
+        const status = document.getElementById('deposit-status-filter').value;
+        
+        const result = await apiCall('/trpc/admin.deposits.list', 'GET', {
+          page: 1,
+          limit: 50,
+          status: status !== 'all' ? status : undefined
+        });
+        
+        if (result?.result?.data) {
+          const { deposits, total } = result.result.data;
+          depositsData = deposits;
+          renderDepositsTable(deposits, total);
+        } else {
+          container.innerHTML = '<div class="empty-state"><i class="fas fa-arrow-circle-down"></i><p>暂无充值数据</p></div>';
+        }
+      } catch (error) {
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-circle"></i><p>加载失败</p></div>';
+      }
+    }
+    
+    function renderDepositsTable(deposits, total) {
+      const container = document.getElementById('deposits-table');
+      
+      if (!deposits || deposits.length === 0) {
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-arrow-circle-down"></i><p>暂无充值数据</p></div>';
+        return;
+      }
+      
+      let html = `
+        <table>
+          <thead>
+            <tr>
+              <th>订单号</th>
+              <th>用户</th>
+              <th>金额</th>
+              <th>状态</th>
+              <th>时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      
+      deposits.forEach(dep => {
+        const statusLabels = { pending: '待审核', approved: '已通过', rejected: '已拒绝' };
+        const statusLabel = statusLabels[dep.status] || dep.status;
+        const statusBadge = `badge-${dep.status}`;
+        
+        html += `
+          <tr>
+            <td>${dep.orderNo}</td>
+            <td>${dep.user?.username || '-'} (${dep.userId})</td>
+            <td style="color: var(--success)">${parseFloat(dep.amount).toFixed(2)} MYR</td>
+            <td><span class="badge ${statusBadge}">${statusLabel}</span></td>
+            <td>${formatDate(dep.createdAt)}</td>
+            <td>
+              <div class="action-buttons">
+                ${dep.status === 'pending' ? `
+                  <button class="btn btn-success btn-xs" onclick="approveDeposit(${dep.id})">
+                    <i class="fas fa-check"></i>
+                  </button>
+                  <button class="btn btn-danger btn-xs" onclick="rejectDeposit(${dep.id})">
+                    <i class="fas fa-times"></i>
+                  </button>
+                ` : '-'}
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+      
+      html += '</tbody></table>';
+      html += `
+        <div class="pagination">
+          <div class="pagination-info">显示 ${deposits.length} 条，共 ${total} 条</div>
+        </div>
+      `;
+      
+      container.innerHTML = html;
+    }
+    
+    async function approveDeposit(id) {
+      if (!confirm('确定要通过该充值申请吗？')) return;
+      
+      try {
+        const result = await apiCall('/trpc/admin.deposits.approve', 'POST', { depositId: id });
+        
+        if (result?.result?.data?.success) {
+          showToast('充值已通过', 'success');
+          loadDeposits();
+          loadDashboard();
+        } else {
+          showToast(result?.error?.message || '操作失败', 'error');
+        }
+      } catch (error) {
+        showToast('操作失败', 'error');
+      }
+    }
+    
+    async function rejectDeposit(id) {
+      if (!confirm('确定要拒绝该充值申请吗？')) return;
+      
+      try {
+        const result = await apiCall('/trpc/admin.deposits.reject', 'POST', { depositId: id });
+        
+        if (result?.result?.data?.success) {
+          showToast('充值已拒绝', 'success');
+          loadDeposits();
+          loadDashboard();
+        } else {
+          showToast(result?.error?.message || '操作失败', 'error');
+        }
+      } catch (error) {
+        showToast('操作失败', 'error');
+      }
+    }
+    
+    // Withdrawals
+    async function loadWithdrawals() {
+      const container = document.getElementById('withdrawals-table');
+      container.innerHTML = '<div class="loading"><i class="fas fa-spinner"></i> 加载中...</div>';
+      
+      try {
+        const status = document.getElementById('withdrawal-status-filter').value;
+        
+        const result = await apiCall('/trpc/admin.withdrawals.list', 'GET', {
+          page: 1,
+          limit: 50,
+          status: status !== 'all' ? status : undefined
+        });
+        
+        if (result?.result?.data) {
+          const { withdrawals, total } = result.result.data;
+          withdrawalsData = withdrawals;
+          renderWithdrawalsTable(withdrawals, total);
+        } else {
+          container.innerHTML = '<div class="empty-state"><i class="fas fa-arrow-circle-up"></i><p>暂无提现数据</p></div>';
+        }
+      } catch (error) {
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-circle"></i><p>加载失败</p></div>';
+      }
+    }
+    
+    function renderWithdrawalsTable(withdrawals, total) {
+      const container = document.getElementById('withdrawals-table');
+      
+      if (!withdrawals || withdrawals.length === 0) {
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-arrow-circle-up"></i><p>暂无提现数据</p></div>';
+        return;
+      }
+      
+      let html = `
+        <table>
+          <thead>
+            <tr>
+              <th>订单号</th>
+              <th>用户</th>
+              <th>金额</th>
+              <th>银行</th>
+              <th>状态</th>
+              <th>时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      
+      withdrawals.forEach(w => {
+        const statusLabels = { pending: '待审核', approved: '已通过', rejected: '已拒绝' };
+        const statusLabel = statusLabels[w.status] || w.status;
+        const statusBadge = `badge-${w.status}`;
+        
+        html += `
+          <tr>
+            <td>${w.orderNo}</td>
+            <td>${w.user?.username || '-'} (${w.userId})</td>
+            <td style="color: var(--danger)">${parseFloat(w.amount).toFixed(2)} MYR</td>
+            <td>${w.bankName} (${w.bankAccount})</td>
+            <td><span class="badge ${statusBadge}">${statusLabel}</span></td>
+            <td>${formatDate(w.createdAt)}</td>
+            <td>
+              <div class="action-buttons">
+                ${w.status === 'pending' ? `
+                  <button class="btn btn-success btn-xs" onclick="approveWithdrawal(${w.id})">
+                    <i class="fas fa-check"></i>
+                  </button>
+                  <button class="btn btn-danger btn-xs" onclick="rejectWithdrawal(${w.id})">
+                    <i class="fas fa-times"></i>
+                  </button>
+                ` : '-'}
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+      
+      html += '</tbody></table>';
+      html += `
+        <div class="pagination">
+          <div class="pagination-info">显示 ${withdrawals.length} 条，共 ${total} 条</div>
+        </div>
+      `;
+      
+      container.innerHTML = html;
+    }
+    
+    async function approveWithdrawal(id) {
+      if (!confirm('确定要通过该提现申请吗？')) return;
+      
+      try {
+        const result = await apiCall('/trpc/admin.withdrawals.approve', 'POST', { withdrawalId: id });
+        
+        if (result?.result?.data?.success) {
+          showToast('提现已通过', 'success');
+          loadWithdrawals();
+          loadDashboard();
+        } else {
+          showToast(result?.error?.message || '操作失败', 'error');
+        }
+      } catch (error) {
+        showToast('操作失败', 'error');
+      }
+    }
+    
+    async function rejectWithdrawal(id) {
+      if (!confirm('确定要拒绝该提现申请吗？')) return;
+      
+      try {
+        const result = await apiCall('/trpc/admin.withdrawals.reject', 'POST', { withdrawalId: id });
+        
+        if (result?.result?.data?.success) {
+          showToast('提现已拒绝', 'success');
+          loadWithdrawals();
+          loadDashboard();
+        } else {
+          showToast(result?.error?.message || '操作失败', 'error');
+        }
+      } catch (error) {
+        showToast('操作失败', 'error');
+      }
+    }
+    
+    // Transactions
+    async function loadTransactions() {
+      const container = document.getElementById('transactions-table');
+      container.innerHTML = '<div class="loading"><i class="fas fa-spinner"></i> 加载中...</div>';
+      
+      // For now, show placeholder
+      container.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>流水号</th>
+              <th>用户</th>
+              <th>类型</th>
+              <th>金额</th>
+              <th>余额</th>
+              <th>备注</th>
+              <th>时间</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 40px;">
+                资金流水功能开发中...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      `;
+    }
+    
+    // Notifications
+    function toggleUserIds() {
+      const target = document.getElementById('notify-target').value;
+      document.getElementById('notify-user-ids-group').style.display = 
+        target === 'specific' ? 'block' : 'none';
+    }
+    
+    async function sendNotification() {
+      const title = document.getElementById('notify-title').value;
+      const content = document.getElementById('notify-content').value;
+      const target = document.getElementById('notify-target').value;
+      const userIdsStr = document.getElementById('notify-user-ids').value;
+      
+      if (!title || !content) {
+        showToast('请填写通知标题和内容', 'error');
+        return;
+      }
+      
+      let userIds = undefined;
+      if (target === 'specific' && userIdsStr) {
+        userIds = userIdsStr.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+        if (userIds.length === 0) {
+          showToast('请输入有效的用户ID', 'error');
+          return;
+        }
+      }
+      
+      try {
+        const result = await apiCall('/trpc/admin.notifications.send', 'POST', {
+          title,
+          content,
+          userIds
+        });
+        
+        if (result?.result?.data?.success) {
+          showToast(`通知已发送给 ${result.result.data.sentCount} 位用户`, 'success');
+          document.getElementById('notify-title').value = '';
+          document.getElementById('notify-content').value = '';
+          document.getElementById('notify-user-ids').value = '';
+        } else {
+          showToast(result?.error?.message || '发送失败', 'error');
+        }
+      } catch (error) {
+        showToast('发送失败', 'error');
+      }
+    }
+    
+    // Export Functions
+    function exportUsers() {
+      if (!usersData || usersData.length === 0) {
+        showToast('没有数据可导出', 'error');
+        return;
+      }
+      
+      const data = usersData.map(u => ({
+        'ID': u.id,
+        '用户名': u.username || '',
+        '手机号': u.phone || '',
+        '实名': u.name || '',
+        '可用余额': parseFloat(u.balance || 0).toFixed(2),
+        '冻结资金': parseFloat(u.frozenBalance || 0).toFixed(2),
+        '状态': u.status === 'active' ? '正常' : '禁用',
+        '注册时间': formatDate(u.createdAt)
+      }));
+      
+      exportToExcel(data, '用户数据');
+    }
+    
+    function exportApplications() {
+      if (!applicationsData || applicationsData.length === 0) {
+        showToast('没有数据可导出', 'error');
+        return;
+      }
+      
+      const statusLabels = { pending: '待审核', allocated: '已分配', rejected: '已拒绝', cancelled: '已取消', completed: '已完成' };
+      
+      const data = applicationsData.map(a => ({
+        '申请ID': a.id,
+        '用户': a.user?.username || '',
+        '用户ID': a.userId,
+        '类型': a.type === 'day_trading' ? '日内交易' : '大宗交易',
+        '股票代码': a.stockCode,
+        '股票名称': a.stockName,
+        '申请数量': a.quantity,
+        '价格': parseFloat(a.price).toFixed(3),
+        '金额': parseFloat(a.amount).toFixed(2),
+        '状态': statusLabels[a.status] || a.status,
+        '申请时间': formatDate(a.createdAt)
+      }));
+      
+      exportToExcel(data, '交易申请');
+    }
+    
+    function exportDeposits() {
+      if (!depositsData || depositsData.length === 0) {
+        showToast('没有数据可导出', 'error');
+        return;
+      }
+      
+      const statusLabels = { pending: '待审核', approved: '已通过', rejected: '已拒绝' };
+      
+      const data = depositsData.map(d => ({
+        '订单号': d.orderNo,
+        '用户': d.user?.username || '',
+        '用户ID': d.userId,
+        '金额': parseFloat(d.amount).toFixed(2),
+        '状态': statusLabels[d.status] || d.status,
+        '时间': formatDate(d.createdAt)
+      }));
+      
+      exportToExcel(data, '充值记录');
+    }
+    
+    function exportWithdrawals() {
+      if (!withdrawalsData || withdrawalsData.length === 0) {
+        showToast('没有数据可导出', 'error');
+        return;
+      }
+      
+      const statusLabels = { pending: '待审核', approved: '已通过', rejected: '已拒绝' };
+      
+      const data = withdrawalsData.map(w => ({
+        '订单号': w.orderNo,
+        '用户': w.user?.username || '',
+        '用户ID': w.userId,
+        '金额': parseFloat(w.amount).toFixed(2),
+        '银行': w.bankName,
+        '卡号': w.bankAccount,
+        '持卡人': w.bankHolder,
+        '状态': statusLabels[w.status] || w.status,
+        '时间': formatDate(w.createdAt)
+      }));
+      
+      exportToExcel(data, '提现记录');
+    }
+    
+    function exportPositions() {
+      if (!positionsData || positionsData.length === 0) {
+        showToast('没有数据可导出', 'error');
+        return;
+      }
+      
+      const data = positionsData.map(p => ({
+        '用户': p.user?.username || '',
+        '用户ID': p.userId,
+        '股票代码': p.stock?.code || '',
+        '股票名称': p.stock?.nameCn || p.stock?.name || '',
+        '持仓数量': p.quantity,
+        '成本价': parseFloat(p.avgCost).toFixed(3),
+        '市值': (p.quantity * parseFloat(p.avgCost)).toFixed(2)
+      }));
+      
+      exportToExcel(data, '持仓数据');
+    }
+    
+    function exportTransactions() {
+      if (!transactionsData || transactionsData.length === 0) {
+        showToast('没有数据可导出', 'error');
+        return;
+      }
+      
+      const typeLabels = { deposit: '充值', withdraw: '提现', buy: '买入', sell: '卖出', fee: '手续费', adjust: '调账' };
+      
+      const data = transactionsData.map(t => ({
+        'ID': t.transaction?.id || t.id,
+        '用户': t.user?.username || '',
+        '用户ID': t.transaction?.userId || t.userId,
+        '类型': typeLabels[t.transaction?.type || t.type] || (t.transaction?.type || t.type),
+        '金额': parseFloat(t.transaction?.amount || t.amount || 0).toFixed(2),
+        '余额': parseFloat(t.transaction?.balanceAfter || t.balanceAfter || 0).toFixed(2),
+        '备注': t.transaction?.remark || t.remark || '',
+        '时间': formatDate(t.transaction?.createdAt || t.createdAt)
+      }));
+      
+      exportToExcel(data, '资金流水');
+    }
+    
+    // Logs
+    async function loadLogs() {
+      const container = document.getElementById('logs-table');
+      container.innerHTML = '<div class="loading"><i class="fas fa-spinner"></i> 加载中...</div>';
+      
+      try {
+        const module = document.getElementById('log-module-filter')?.value || 'all';
+        const search = document.getElementById('log-search')?.value || '';
+        
+        const result = await apiCall('/trpc/admin.logs.list', 'GET', {
+          page: 1,
+          limit: 100,
+          module: module === 'all' ? undefined : module,
+          search: search || undefined
+        });
+        
+        if (result?.result?.data) {
+          const { logs, total } = result.result.data;
+          logsData = logs;
+          renderLogs(logs, total);
+        } else {
+          container.innerHTML = '<div class="empty-state"><i class="fas fa-history"></i><p>暂无操作日志</p></div>';
+        }
+      } catch (error) {
+        console.error('Load logs error:', error);
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-circle"></i><p>加载失败</p></div>';
+      }
+    }
+    
+    function renderLogs(logs, total) {
+      const container = document.getElementById('logs-table');
+      
+      if (!logs || logs.length === 0) {
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-history"></i><p>暂无操作日志</p></div>';
+        return;
+      }
+      
+      let html = `
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>管理员</th>
+              <th>模块</th>
+              <th>操作</th>
+              <th>详情</th>
+              <th>时间</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      
+      logs.forEach(log => {
+        html += `
+          <tr>
+            <td>${log.id}</td>
+            <td>${log.adminName || '-'}</td>
+            <td><span class="badge badge-info">${log.module}</span></td>
+            <td>${log.action}</td>
+            <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${log.detail || ''}">${log.detail || '-'}</td>
+            <td>${formatDate(log.createdAt)}</td>
+          </tr>
+        `;
+      });
+      
+      html += '</tbody></table>';
+      html += `
+        <div class="pagination">
+          <div class="pagination-info">显示 ${logs.length} 条，共 ${total} 条</div>
+        </div>
+      `;
+      
+      container.innerHTML = html;
+    }
+    
+    function exportLogs() {
+      if (!logsData || logsData.length === 0) {
+        showToast('没有数据可导出', 'error');
+        return;
+      }
+      
+      const data = logsData.map(log => ({
+        'ID': log.id,
+        '管理员': log.adminName || '',
+        '模块': log.module,
+        '操作': log.action,
+        '详情': log.detail || '',
+        '时间': formatDate(log.createdAt)
+      }));
+      
+      exportToExcel(data, '操作日志');
+    }
+    
+    function exportToExcel(data, filename) {
+      try {
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+        
+        const now = new Date();
+        const dateStr = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}`;
+        
+        XLSX.writeFile(wb, `${filename}_${dateStr}.xlsx`);
+        showToast('导出成功', 'success');
+      } catch (error) {
+        console.error('Export error:', error);
+        showToast('导出失败', 'error');
+      }
+    }
+    
+    // Utility Functions
+    function formatDate(dateStr) {
+      if (!dateStr) return '-';
+      const date = new Date(dateStr);
+      return date.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+    
+    function openModal(modalId) {
+      document.getElementById(modalId).classList.add('active');
+    }
+    
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.remove('active');
+    }
+    
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      const icon = toast.querySelector('i');
+      const text = document.getElementById('toast-message');
+      
+      toast.className = `toast ${type}`;
+      icon.className = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
+      text.textContent = message;
+      
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+  </script>
+</body>
+</html>
