@@ -1208,7 +1208,7 @@
 
   <script>
     // API Base URL
-    const API_BASE = 'https://3000-il9752br2hcf0rrwgiony-d82fd949.sg1.manus.computer';
+    const API_BASE = 'https://3000-il9752br2hcf0rrwgiony-d82fd949.sg1.manus.computer/api';
     
     // State
     let currentPage = 'dashboard';
@@ -1290,15 +1290,17 @@
       errorDiv.style.display = 'none';
       
       try {
-        const result = await apiCall('/trpc/auth.login', 'POST', { username, password });
+        const result = await apiCall('/trpc/auth.login', 'POST', { json: { username, password } });
         
-        if (result?.result?.data) {
-          const user = result.result.data;
+        if (result?.result?.data?.json) {
+          const data = result.result.data.json;
           
           // Check if user is admin
-          if (user.role !== 'admin') {
+          if (data.user?.role !== 'admin') {
             throw new Error('您没有管理员权限');
           }
+          
+          const user = data.user;
           
           adminToken = 'session_' + Date.now();
           adminUser = user;
