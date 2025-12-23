@@ -1379,7 +1379,7 @@
         const options = {
           method,
           headers: { 'Content-Type': 'application/json' },
-          credentials: 'include'
+          mode: 'cors'
         };
         
         if (method === 'POST' && data) {
@@ -1388,14 +1388,17 @@
         
         let url = `${API_BASE}${endpoint}`;
         if (method === 'GET' && data) {
-          url += `?input=${encodeURIComponent(JSON.stringify(data))}`;
+          url += `?input=${encodeURIComponent(JSON.stringify({ json: data }))}`;
         }
         
+        console.log('API Request:', url, options);
         const response = await fetch(url, options);
-        return await response.json();
+        const result = await response.json();
+        console.log('API Response:', result);
+        return result;
       } catch (error) {
         console.error('API Error:', error);
-        return null;
+        return { error: { message: error.message || '网络请求失败' } };
       }
     }
     
